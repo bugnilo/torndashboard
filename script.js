@@ -29,6 +29,23 @@ async function updateDashboard() {
     const res = await fetch(URL);
     const data = await res.json();
 
+    // TODO: atualizar a UI aqui
+
+    console.log("API call", new Date().toLocaleTimeString());
+
+  } catch (e) {
+    console.error("Erro na API", e);
+  }
+}
+
+// roda uma vez ao carregar
+updateDashboard();
+
+// agenda as próximas
+const API_INTERVAL = 10000; // 10 segundos
+setInterval(updateDashboard, API_INTERVAL);
+
+
     // Vida
     const lifePct = percent(data.life.current, data.life.maximum);
     document.getElementById("life-bar").style.width = `${lifePct}%`;
