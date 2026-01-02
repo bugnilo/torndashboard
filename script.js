@@ -7,7 +7,7 @@ const COOLDOWN_LINKS = {
   booster: "https://www.torn.com/item.php#boosters"
 };
 
-const API_INTERVAL = 1000; // 1s
+const API_INTERVAL = 60000; // 60s
 
 let cooldowns = {};
 
@@ -163,7 +163,7 @@ setInterval(() => {
       renderCooldown(key, cooldowns[key]);
     }
   }
-}, 60000);
+}, 1000);
 
 // === ADICIONADO: countdown regressivo de Energy + Nerve
 setInterval(() => {
