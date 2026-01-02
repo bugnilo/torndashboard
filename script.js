@@ -8,7 +8,7 @@ const COOLDOWN_LINKS = {
   booster: "https://www.torn.com/item.php#boosters"
 };
 
-const API_INTERVAL = 10000; // 10s
+const API_INTERVAL = 60000; // 60s
 
 let cooldowns = {};
 
