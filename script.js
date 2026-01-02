@@ -29,41 +29,23 @@ function percent(current, max) {
   return Math.round((current / max) * 100);
 }
 
-function calculateEnergyRegen(current, max) {
-  const missing = max - current;
-  if (missing <= 0) return null;
+// === ADICIONADO: formatação legível (1h 9m)
+function formatMinutesToHM(totalMinutes) {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
 
-  // Torn: +5 energy a cada 10 minutos
-  const ticks = missing / 5;
-  const totalMinutes = ticks * 10;
-
-  const readyAt = new Date(Date.now() + totalMinutes * 60000);
-
-  return {
-    minutes: Math.round(totalMinutes),
-    readyAt
-  };
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
 }
 
-function calculateNerveRegen(current, max) {
-  const missing = max - current;
-  if (missing <= 0) return null;
-
-  // Torn: +1 nerve a cada 5 minutos
-  const totalMinutes = missing * 5;
-
-  const readyAt = new Date(Date.now() + totalMinutes * 60000);
-
-  return {
-    minutes: totalMinutes,
-    readyAt
-  };
-}
+// ================= STATE (ADICIONADO) =================
+let energyRegenState = null;
+let nerveRegenState = null;
 
 // ================= RENDER =================
 function renderCooldown(id, seconds) {
   const el = document.getElementById(id);
-
   if (!el) return;
 
   if (seconds <= 0) {
@@ -83,7 +65,6 @@ function renderCooldown(id, seconds) {
 function renderEnergyRegen(regen) {
   const timerEl = document.getElementById("energy-timer");
   const clockEl = document.getElementById("energy-clock");
-
   if (!timerEl || !clockEl) return;
 
   if (!regen) {
@@ -92,7 +73,7 @@ function renderEnergyRegen(regen) {
     return;
   }
 
-  timerEl.innerText = `⚡ cheia em ${regen.minutes} min`;
+  timerEl.innerText = `⚡ cheia em ${regen.label}`;
   clockEl.innerText =
     `🕒 às ${regen.readyAt.toLocaleTimeString([], {
       hour: "2-digit",
@@ -103,7 +84,6 @@ function renderEnergyRegen(regen) {
 function renderNerveRegen(regen) {
   const timerEl = document.getElementById("nerve-timer");
   const clockEl = document.getElementById("nerve-clock");
-
   if (!timerEl || !clockEl) return;
 
   if (!regen) {
@@ -112,14 +92,13 @@ function renderNerveRegen(regen) {
     return;
   }
 
-  timerEl.innerText = `🧠 cheia em ${regen.minutes} min`;
+  timerEl.innerText = `🧠 cheia em ${regen.label}`;
   clockEl.innerText =
     `🕒 às ${regen.readyAt.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit"
     })}`;
 }
-
 
 // ================= API =================
 async function updateDashboard() {
@@ -133,16 +112,18 @@ async function updateDashboard() {
     const energyPct = percent(data.energy.current, data.energy.maximum);
     document.getElementById("life-bar").style.width = `${energyPct}%`;
     document.getElementById("life-text").innerText =
-    `${data.energy.current} / ${data.energy.maximum}`;
+      `${data.energy.current} / ${data.energy.maximum}`;
 
-    // ENERGY REGEN
-const energyRegen = calculateEnergyRegen(
-  data.energy.current,
-  data.energy.maximum
-);
-
-renderEnergyRegen(energyRegen);
-
+    // === ALTERADO: fixa previsão de ENERGY (uma vez)
+    const energyMissing = data.energy.maximum - data.energy.current;
+    if (energyMissing > 0) {
+      const totalMinutes = (energyMissing / 5) * 10;
+      energyRegenState = {
+        readyAt: Date.now() + totalMinutes * 60000
+      };
+    } else {
+      energyRegenState = null;
+    }
 
     // Nerve
     const nervePct = percent(data.nerve.current, data.nerve.maximum);
@@ -150,17 +131,19 @@ renderEnergyRegen(energyRegen);
     document.getElementById("nerve-text").innerText =
       `${data.nerve.current} / ${data.nerve.maximum}`;
 
-// NERVE REGEN
-const nerveRegen = calculateNerveRegen(
-  data.nerve.current,
-  data.nerve.maximum
-);
+    // === ALTERADO: fixa previsão de NERVE (uma vez)
+    const nerveMissing = data.nerve.maximum - data.nerve.current;
+    if (nerveMissing > 0) {
+      const totalMinutes = nerveMissing * 5;
+      nerveRegenState = {
+        readyAt: Date.now() + totalMinutes * 60000
+      };
+    } else {
+      nerveRegenState = null;
+    }
 
-renderNerveRegen(nerveRegen);
-    
     // Cooldowns
     cooldowns = { ...data.cooldowns };
-
     renderCooldown("drug", cooldowns.drug);
     renderCooldown("medical", cooldowns.medical);
     renderCooldown("booster", cooldowns.booster);
@@ -171,9 +154,10 @@ renderNerveRegen(nerveRegen);
 }
 
 // ================= TIMERS =================
-updateDashboard(); // primeira chamada
+updateDashboard();
 setInterval(updateDashboard, API_INTERVAL);
 
+// cooldowns (como você já tinha)
 setInterval(() => {
   for (const key in cooldowns) {
     if (cooldowns[key] > 0) {
@@ -182,3 +166,37 @@ setInterval(() => {
     }
   }
 }, 60000);
+
+// === ADICIONADO: countdown regressivo de Energy + Nerve
+setInterval(() => {
+  const now = Date.now();
+
+  if (energyRegenState) {
+    const diff = energyRegenState.readyAt - now;
+    if (diff <= 0) {
+      energyRegenState = null;
+      renderEnergyRegen(null);
+    } else {
+      const minutes = Math.ceil(diff / 60000);
+      renderEnergyRegen({
+        label: formatMinutesToHM(minutes),
+        readyAt: new Date(energyRegenState.readyAt)
+      });
+    }
+  }
+
+  if (nerveRegenState) {
+    const diff = nerveRegenState.readyAt - now;
+    if (diff <= 0) {
+      nerveRegenState = null;
+      renderNerveRegen(null);
+    } else {
+      const minutes = Math.ceil(diff / 60000);
+      renderNerveRegen({
+        label: formatMinutesToHM(minutes),
+        readyAt: new Date(nerveRegenState.readyAt)
+      });
+    }
+  }
+}, 1000);
+
