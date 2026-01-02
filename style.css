@@ -181,3 +181,35 @@ li:last-child {
   box-shadow: 0 0 12px rgba(61, 220, 151, 0.6);
 }
 
+/* =========================
+   AÇÕES RÁPIDAS
+========================= */
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4aa3ff, #2f81f7);
+  color: #0b0f14;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 14px rgba(74, 163, 255, 0.6);
+}
+
+/* Variante */
+.action-btn.secondary {
+  background: linear-gradient(90deg, #3ddc97, #2ecc71);
+}
+
+
