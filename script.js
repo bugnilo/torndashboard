@@ -92,4 +92,4 @@ setInterval(() => {
       renderCooldown(key, cooldowns[key]);
     }
   }
-}, 1000);
+}, 60000);
