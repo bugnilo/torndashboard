@@ -8,6 +8,11 @@ const COOLDOWN_LINKS = {
   booster: "https://www.torn.com/item.php#boosters"
 };
 
+const API_INTERVAL = 30000; // 30s
+
+let cooldowns = {};
+
+// ================= UTIL =================
 function formatTime(seconds) {
   if (seconds <= 0) return "Pronto";
 
@@ -24,56 +29,11 @@ function percent(current, max) {
   return Math.round((current / max) * 100);
 }
 
-let cooldowns = {};
-let apiInterval = null;
-
-const API_INTERVAL = 30000; // 30s (seguro)
-
-async function updateDashboard() {
-  try {
-    const res = await fetch(URL);
-    const data = await res.json();
-
-    console.log("API call", new Date().toLocaleTimeString());
-
-    // salva cooldowns vindos da API
-    cooldowns = { ...data.cooldowns };
-
-    // render inicial
-    renderCooldown("drug", cooldowns.drug);
-    renderCooldown("medical", cooldowns.medical);
-    renderCooldown("booster", cooldowns.booster);
-
-  } catch (e) {
-    console.error("Erro na API", e);
-  }
-}
-
-
-    // Vida
-    const lifePct = percent(data.life.current, data.life.maximum);
-    document.getElementById("life-bar").style.width = `${lifePct}%`;
-    document.getElementById("life-text").innerText =
-      `${data.life.current} / ${data.life.maximum}`;
-
-    // Nerve
-    const nervePct = percent(data.nerve.current, data.nerve.maximum);
-    document.getElementById("nerve-bar").style.width = `${nervePct}%`;
-    document.getElementById("nerve-text").innerText =
-      `${data.nerve.current} / ${data.nerve.maximum}`;
-
-    // Cooldowns
-renderCooldown("drug", data.cooldowns.drug);
-renderCooldown("medical", data.cooldowns.medical);
-renderCooldown("booster", data.cooldowns.booster);
-
-  } catch (e) {
-    console.error("Erro ao buscar dados do Torn:", e);
-  }
-}
-
+// ================= RENDER =================
 function renderCooldown(id, seconds) {
   const el = document.getElementById(id);
+
+  if (!el) return;
 
   if (seconds <= 0) {
     el.innerHTML = `
@@ -89,17 +49,47 @@ function renderCooldown(id, seconds) {
   }
 }
 
+// ================= API =================
+async function updateDashboard() {
+  try {
+    const res = await fetch(URL);
+    const data = await res.json();
+
+    console.log("API call", new Date().toLocaleTimeString());
+
+    // Vida
+    const lifePct = percent(data.life.current, data.life.maximum);
+    document.getElementById("life-bar").style.width = `${lifePct}%`;
+    document.getElementById("life-text").innerText =
+      `${data.life.current} / ${data.life.maximum}`;
+
+    // Nerve
+    const nervePct = percent(data.nerve.current, data.nerve.maximum);
+    document.getElementById("nerve-bar").style.width = `${nervePct}%`;
+    document.getElementById("nerve-text").innerText =
+      `${data.nerve.current} / ${data.nerve.maximum}`;
+
+    // Cooldowns
+    cooldowns = { ...data.cooldowns };
+
+    renderCooldown("drug", cooldowns.drug);
+    renderCooldown("medical", cooldowns.medical);
+    renderCooldown("booster", cooldowns.booster);
+
+  } catch (e) {
+    console.error("Erro ao buscar dados do Torn:", e);
+  }
+}
+
+// ================= TIMERS =================
 updateDashboard(); // primeira chamada
+setInterval(updateDashboard, API_INTERVAL);
 
-apiInterval = setInterval(updateDashboard, API_INTERVAL);
-
-function tickCooldowns() {
+setInterval(() => {
   for (const key in cooldowns) {
     if (cooldowns[key] > 0) {
       cooldowns[key]--;
       renderCooldown(key, cooldowns[key]);
     }
   }
-}
-
-setInterval(tickCooldowns, 1000);
+}, 1000);
