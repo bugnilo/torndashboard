@@ -8,7 +8,7 @@ const COOLDOWN_LINKS = {
   booster: "https://www.torn.com/item.php#boosters"
 };
 
-const API_INTERVAL = 30000; // 30s
+const API_INTERVAL = 10000; // 10s
 
 let cooldowns = {};
 
@@ -57,11 +57,11 @@ async function updateDashboard() {
 
     console.log("API call", new Date().toLocaleTimeString());
 
-    // Vida
-    const lifePct = percent(data.life.current, data.life.maximum);
-    document.getElementById("life-bar").style.width = `${lifePct}%`;
+    // Energia
+    const energyPct = percent(data.energy.current, data.energy.maximum);
+    document.getElementById("life-bar").style.width = `${energyPct}%`;
     document.getElementById("life-text").innerText =
-      `${data.life.current} / ${data.life.maximum}`;
+    `${data.energy.current} / ${data.energy.maximum}`;
 
     // Nerve
     const nervePct = percent(data.nerve.current, data.nerve.maximum);
