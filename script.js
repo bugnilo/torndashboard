@@ -45,6 +45,21 @@ function calculateEnergyRegen(current, max) {
   };
 }
 
+function calculateNerveRegen(current, max) {
+  const missing = max - current;
+  if (missing <= 0) return null;
+
+  // Torn: +1 nerve a cada 5 minutos
+  const totalMinutes = missing * 5;
+
+  const readyAt = new Date(Date.now() + totalMinutes * 60000);
+
+  return {
+    minutes: totalMinutes,
+    readyAt
+  };
+}
+
 // ================= RENDER =================
 function renderCooldown(id, seconds) {
   const el = document.getElementById(id);
@@ -85,6 +100,26 @@ function renderEnergyRegen(regen) {
     })}`;
 }
 
+function renderNerveRegen(regen) {
+  const timerEl = document.getElementById("nerve-timer");
+  const clockEl = document.getElementById("nerve-clock");
+
+  if (!timerEl || !clockEl) return;
+
+  if (!regen) {
+    timerEl.innerText = "🧠 Nerve cheia";
+    clockEl.innerText = "";
+    return;
+  }
+
+  timerEl.innerText = `🧠 cheia em ${regen.minutes} min`;
+  clockEl.innerText =
+    `🕒 às ${regen.readyAt.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    })}`;
+}
+
 
 // ================= API =================
 async function updateDashboard() {
@@ -115,6 +150,14 @@ renderEnergyRegen(energyRegen);
     document.getElementById("nerve-text").innerText =
       `${data.nerve.current} / ${data.nerve.maximum}`;
 
+// NERVE REGEN
+const nerveRegen = calculateNerveRegen(
+  data.nerve.current,
+  data.nerve.maximum
+);
+
+renderNerveRegen(nerveRegen);
+    
     // Cooldowns
     cooldowns = { ...data.cooldowns };
 
