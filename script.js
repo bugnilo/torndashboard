@@ -51,5 +51,22 @@ async function updateDashboard() {
   }
 }
 
+function renderCooldown(id, seconds) {
+  const el = document.getElementById(id);
+
+  if (seconds <= 0) {
+    el.innerHTML = `
+      <a href="${COOLDOWN_LINKS[id]}"
+         target="_blank"
+         class="cooldown-btn">
+         Usar agora
+      </a>
+    `;
+  } else {
+    el.textContent = `⏳ ${formatTime(seconds)}`;
+    el.className = "waiting";
+  }
+}
+
 updateDashboard();
 setInterval(updateDashboard, 10000);
