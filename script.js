@@ -29,6 +29,22 @@ function percent(current, max) {
   return Math.round((current / max) * 100);
 }
 
+function calculateEnergyRegen(current, max) {
+  const missing = max - current;
+  if (missing <= 0) return null;
+
+  // Torn: +5 energy a cada 10 minutos
+  const ticks = missing / 5;
+  const totalMinutes = ticks * 10;
+
+  const readyAt = new Date(Date.now() + totalMinutes * 60000);
+
+  return {
+    minutes: Math.round(totalMinutes),
+    readyAt
+  };
+}
+
 // ================= RENDER =================
 function renderCooldown(id, seconds) {
   const el = document.getElementById(id);
@@ -49,6 +65,27 @@ function renderCooldown(id, seconds) {
   }
 }
 
+function renderEnergyRegen(regen) {
+  const timerEl = document.getElementById("energy-timer");
+  const clockEl = document.getElementById("energy-clock");
+
+  if (!timerEl || !clockEl) return;
+
+  if (!regen) {
+    timerEl.innerText = "⚡ Energy cheia";
+    clockEl.innerText = "";
+    return;
+  }
+
+  timerEl.innerText = `⚡ cheia em ${regen.minutes} min`;
+  clockEl.innerText =
+    `🕒 às ${regen.readyAt.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    })}`;
+}
+
+
 // ================= API =================
 async function updateDashboard() {
   try {
@@ -62,6 +99,15 @@ async function updateDashboard() {
     document.getElementById("life-bar").style.width = `${energyPct}%`;
     document.getElementById("life-text").innerText =
     `${data.energy.current} / ${data.energy.maximum}`;
+
+    // ENERGY REGEN
+const energyRegen = calculateEnergyRegen(
+  data.energy.current,
+  data.energy.maximum
+);
+
+renderEnergyRegen(energyRegen);
+
 
     // Nerve
     const nervePct = percent(data.nerve.current, data.nerve.maximum);
