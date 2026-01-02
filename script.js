@@ -24,26 +24,30 @@ function percent(current, max) {
   return Math.round((current / max) * 100);
 }
 
+let cooldowns = {};
+let apiInterval = null;
+
+const API_INTERVAL = 30000; // 30s (seguro)
+
 async function updateDashboard() {
   try {
     const res = await fetch(URL);
     const data = await res.json();
 
-    // TODO: atualizar a UI aqui
-
     console.log("API call", new Date().toLocaleTimeString());
+
+    // salva cooldowns vindos da API
+    cooldowns = { ...data.cooldowns };
+
+    // render inicial
+    renderCooldown("drug", cooldowns.drug);
+    renderCooldown("medical", cooldowns.medical);
+    renderCooldown("booster", cooldowns.booster);
 
   } catch (e) {
     console.error("Erro na API", e);
   }
 }
-
-// roda uma vez ao carregar
-updateDashboard();
-
-// agenda as próximas
-const API_INTERVAL = 10000; // 10 segundos
-setInterval(updateDashboard, API_INTERVAL);
 
 
     // Vida
@@ -85,5 +89,17 @@ function renderCooldown(id, seconds) {
   }
 }
 
-updateDashboard();
-setInterval(updateDashboard, 10000);
+updateDashboard(); // primeira chamada
+
+apiInterval = setInterval(updateDashboard, API_INTERVAL);
+
+function tickCooldowns() {
+  for (const key in cooldowns) {
+    if (cooldowns[key] > 0) {
+      cooldowns[key]--;
+      renderCooldown(key, cooldowns[key]);
+    }
+  }
+}
+
+setInterval(tickCooldowns, 1000);
