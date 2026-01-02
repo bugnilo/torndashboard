@@ -2,6 +2,12 @@ import { TORN_API_KEY } from "./config.js";
 
 const URL = `https://api.torn.com/user/?selections=bars,cooldowns&key=${TORN_API_KEY}`;
 
+const COOLDOWN_LINKS = {
+  drug: "https://www.torn.com/item.php#drugs",
+  medical: "https://www.torn.com/hospital.php",
+  booster: "https://www.torn.com/item.php#boosters"
+};
+
 function formatTime(seconds) {
   if (seconds <= 0) return "Pronto";
 
@@ -46,4 +52,4 @@ async function updateDashboard() {
 }
 
 updateDashboard();
-setInterval(updateDashboard, 1000);
+setInterval(updateDashboard, 10000);
