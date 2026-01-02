@@ -42,9 +42,9 @@ async function updateDashboard() {
       `${data.nerve.current} / ${data.nerve.maximum}`;
 
     // Cooldowns
-    document.getElementById("drug").innerText = formatTime(data.cooldowns.drug);
-    document.getElementById("medical").innerText = formatTime(data.cooldowns.medical);
-    document.getElementById("booster").innerText = formatTime(data.cooldowns.booster);
+renderCooldown("drug", data.cooldowns.drug);
+renderCooldown("medical", data.cooldowns.medical);
+renderCooldown("booster", data.cooldowns.booster);
 
   } catch (e) {
     console.error("Erro ao buscar dados do Torn:", e);
