@@ -4,7 +4,7 @@ const URL = `https://api.torn.com/user/?selections=bars,cooldowns&key=${TORN_API
 
 const COOLDOWN_LINKS = {
   drug: "https://www.torn.com/item.php#drugs",
-  medical: "https://www.torn.com/hospital.php",
+  medical: "https://www.torn.com/factions.php?step=your#/tab=armoury",
   booster: "https://www.torn.com/item.php#boosters"
 };
 
