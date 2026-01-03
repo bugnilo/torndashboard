@@ -4,6 +4,7 @@ const URL = `https://api.torn.com/user/?selections=bars,cooldowns&key=${TORN_API
 
 const COOLDOWN_LINKS = {
   drug: "https://www.torn.com/item.php#drugs",
+  medical: "https://www.torn.com/hospital.php",
   booster: "https://www.torn.com/item.php#boosters"
 };
 
@@ -28,7 +29,7 @@ function percent(current, max) {
   return Math.round((current / max) * 100);
 }
 
-// === ADICIONADO: formatação legível (1h 9m)
+// formatação legível (1h 9m)
 function formatMinutesToHM(totalMinutes) {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
@@ -38,7 +39,7 @@ function formatMinutesToHM(totalMinutes) {
   return `${m}m`;
 }
 
-// ================= STATE (ADICIONADO) =================
+// ================= STATE =================
 let energyRegenState = null;
 let nerveRegenState = null;
 
@@ -107,43 +108,40 @@ async function updateDashboard() {
 
     console.log("API call", new Date().toLocaleTimeString());
 
-    // Energia
+    // ENERGY
     const energyPct = percent(data.energy.current, data.energy.maximum);
-    document.getElementById("life-bar").style.width = `${energyPct}%`;
-    document.getElementById("life-text").innerText =
-      `${data.energy.current} / ${data.energy.maximum}`;
+    const energyBar = document.getElementById("energy-bar");
+    const energyText = document.getElementById("energy-text");
+    if (energyBar) energyBar.style.width = `${energyPct}%`;
+    if (energyText) energyText.innerText = `${data.energy.current} / ${data.energy.maximum}`;
 
-    // === ALTERADO: fixa previsão de ENERGY (uma vez)
     const energyMissing = data.energy.maximum - data.energy.current;
     if (energyMissing > 0) {
       const totalMinutes = (energyMissing / 5) * 10;
-      energyRegenState = {
-        readyAt: Date.now() + totalMinutes * 60000
-      };
+      energyRegenState = { readyAt: Date.now() + totalMinutes * 60000 };
     } else {
       energyRegenState = null;
     }
 
-    // Nerve
+    // NERVE
     const nervePct = percent(data.nerve.current, data.nerve.maximum);
-    document.getElementById("nerve-bar").style.width = `${nervePct}%`;
-    document.getElementById("nerve-text").innerText =
-      `${data.nerve.current} / ${data.nerve.maximum}`;
+    const nerveBar = document.getElementById("nerve-bar");
+    const nerveText = document.getElementById("nerve-text");
+    if (nerveBar) nerveBar.style.width = `${nervePct}%`;
+    if (nerveText) nerveText.innerText = `${data.nerve.current} / ${data.nerve.maximum}`;
 
-    // === ALTERADO: fixa previsão de NERVE (uma vez)
     const nerveMissing = data.nerve.maximum - data.nerve.current;
     if (nerveMissing > 0) {
       const totalMinutes = nerveMissing * 5;
-      nerveRegenState = {
-        readyAt: Date.now() + totalMinutes * 60000
-      };
+      nerveRegenState = { readyAt: Date.now() + totalMinutes * 60000 };
     } else {
       nerveRegenState = null;
     }
 
-    // Cooldowns
+    // COOLDOWNS
     cooldowns = { ...data.cooldowns };
     renderCooldown("drug", cooldowns.drug);
+    renderCooldown("medical", cooldowns.medical);
     renderCooldown("booster", cooldowns.booster);
 
   } catch (e) {
@@ -155,7 +153,7 @@ async function updateDashboard() {
 updateDashboard();
 setInterval(updateDashboard, API_INTERVAL);
 
-// cooldowns (como você já tinha)
+// Cooldowns regredindo
 setInterval(() => {
   for (const key in cooldowns) {
     if (cooldowns[key] > 0) {
@@ -165,7 +163,7 @@ setInterval(() => {
   }
 }, 1000);
 
-// === ADICIONADO: countdown regressivo de Energy + Nerve
+// ENERGY + NERVE countdown regressivo
 setInterval(() => {
   const now = Date.now();
 
@@ -197,15 +195,3 @@ setInterval(() => {
     }
   }
 }, 1000);
-
-// ENERGY
-const energyPct = percent(data.energy.current, data.energy.maximum);
-document.getElementById("energy-bar").style.width = `${energyPct}%`;
-document.getElementById("energy-text").innerText =
-  `${data.energy.current} / ${data.energy.maximum}`;
-
-// NERVE
-const nervePct = percent(data.nerve.current, data.nerve.maximum);
-document.getElementById("nerve-bar").style.width = `${nervePct}%`;
-document.getElementById("nerve-text").innerText =
-  `${data.nerve.current} / ${data.nerve.maximum}`;
