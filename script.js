@@ -198,3 +198,14 @@ setInterval(() => {
   }
 }, 1000);
 
+// ENERGY
+const energyPct = percent(data.energy.current, data.energy.maximum);
+document.getElementById("energy-bar").style.width = `${energyPct}%`;
+document.getElementById("energy-text").innerText =
+  `${data.energy.current} / ${data.energy.maximum}`;
+
+// NERVE
+const nervePct = percent(data.nerve.current, data.nerve.maximum);
+document.getElementById("nerve-bar").style.width = `${nervePct}%`;
+document.getElementById("nerve-text").innerText =
+  `${data.nerve.current} / ${data.nerve.maximum}`;
