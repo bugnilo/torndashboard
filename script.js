@@ -184,15 +184,24 @@ renderCooldown("booster", cooldowns.booster ?? 0);
 updateDashboard();
 setInterval(updateDashboard, API_INTERVAL);
 
-// Cooldowns
+// Cooldowns (somente os válidos)
 setInterval(() => {
-  for (const key in cooldowns) {
-    if (cooldowns[key] > 0) {
-      cooldowns[key]--;
-      renderCooldown(key, cooldowns[key]);
-    }
+  if (cooldowns.drug > 0) {
+    cooldowns.drug--;
+    renderCooldown("drug", cooldowns.drug);
+  }
+
+  if (cooldowns.medical > 0) {
+    cooldowns.medical--;
+    renderCooldown("medical", cooldowns.medical);
+  }
+
+  if (cooldowns.booster > 0) {
+    cooldowns.booster--;
+    renderCooldown("booster", cooldowns.booster);
   }
 }, 1000);
+
 
 // Energy + Nerve
 setInterval(() => {
