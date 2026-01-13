@@ -1,6 +1,6 @@
 import { TORN_API_KEY } from "./config.js";
 
-const URL = `https://api.torn.com/user/?selections=bars,cooldowns,racing&key=${TORN_API_KEY}`;
+const URL = `https://api.torn.com/user/?selections=bars,cooldowns&key=${TORN_API_KEY}`;
 
 const COOLDOWN_LINKS = {
   drug: "https://www.torn.com/item.php#drugs",
@@ -12,7 +12,7 @@ const COOLDOWN_LINKS = {
 const API_INTERVAL = 60000; // 60s
 
 let cooldowns = {};
-let racingEndAt = null;
+let racingEndAt = null; // mantido apenas para compatibilidade visual
 
 // ================= UTIL =================
 function formatTime(seconds) {
@@ -67,26 +67,13 @@ function renderRacing() {
   const el = document.getElementById("racing");
   if (!el) return;
 
-  if (!racingEndAt) {
-    el.innerHTML = `
-      <a href="${COOLDOWN_LINKS.racing}"
-         target="_blank"
-         class="cooldown-btn">
-         Ir para corrida 🏁
-      </a>
-    `;
-    return;
-  }
-
-  const diff = Math.floor((racingEndAt - Date.now()) / 1000);
-
-  if (diff <= 0) {
-    racingEndAt = null;
-    renderRacing();
-  } else {
-    el.textContent = `🏁 ${formatTime(diff)}`;
-    el.className = "waiting";
-  }
+  el.innerHTML = `
+    <a href="${COOLDOWN_LINKS.racing}"
+       target="_blank"
+       class="cooldown-btn">
+       Ir para corrida 🏁
+    </a>
+  `;
 }
 
 function renderEnergyRegen(regen) {
@@ -135,44 +122,46 @@ async function updateDashboard() {
 
     console.log("API call", new Date().toLocaleTimeString());
 
-    // ENERGY
-    const energyPct = percent(data.energy.current, data.energy.maximum);
-    document.getElementById("energy-bar").style.width = `${energyPct}%`;
-    document.getElementById("energy-text").innerText =
-      `${data.energy.current} / ${data.energy.maximum}`;
+    // ========= ENERGY =========
+    const energy = data.bars?.energy;
+    if (energy) {
+      const energyPct = percent(energy.current, energy.maximum);
+      document.getElementById("energy-bar").style.width = `${energyPct}%`;
+      document.getElementById("energy-text").innerText =
+        `${energy.current} / ${energy.maximum}`;
 
-    const energyMissing = data.energy.maximum - data.energy.current;
-    energyRegenState = energyMissing > 0
-      ? { readyAt: Date.now() + ((energyMissing / 5) * 10) * 60000 }
-      : null;
-
-    // NERVE
-    const nervePct = percent(data.nerve.current, data.nerve.maximum);
-    document.getElementById("nerve-bar").style.width = `${nervePct}%`;
-    document.getElementById("nerve-text").innerText =
-      `${data.nerve.current} / ${data.nerve.maximum}`;
-
-    const nerveMissing = data.nerve.maximum - data.nerve.current;
-    nerveRegenState = nerveMissing > 0
-      ? { readyAt: Date.now() + (nerveMissing * 5) * 60000 }
-      : null;
-
-// COOLDOWNS (protegido)
-if (data.cooldowns) {
-  cooldowns = { ...data.cooldowns };
-}
-
-renderCooldown("drug", cooldowns.drug ?? 0);
-renderCooldown("medical", cooldowns.medical ?? 0);
-renderCooldown("booster", cooldowns.booster ?? 0);
-
-    // RACING
-    if (data.racing?.race?.ends) {
-      racingEndAt = data.racing.race.ends * 1000;
-    } else {
-      racingEndAt = null;
+      const energyMissing = energy.maximum - energy.current;
+      energyRegenState =
+        energyMissing > 0
+          ? { readyAt: Date.now() + ((energyMissing / 5) * 10) * 60000 }
+          : null;
     }
 
+    // ========= NERVE =========
+    const nerve = data.bars?.nerve;
+    if (nerve) {
+      const nervePct = percent(nerve.current, nerve.maximum);
+      document.getElementById("nerve-bar").style.width = `${nervePct}%`;
+      document.getElementById("nerve-text").innerText =
+        `${nerve.current} / ${nerve.maximum}`;
+
+      const nerveMissing = nerve.maximum - nerve.current;
+      nerveRegenState =
+        nerveMissing > 0
+          ? { readyAt: Date.now() + (nerveMissing * 5) * 60000 }
+          : null;
+    }
+
+    // ========= COOLDOWNS =========
+    if (data.cooldowns) {
+      cooldowns = { ...data.cooldowns };
+    }
+
+    renderCooldown("drug", cooldowns.drug ?? 0);
+    renderCooldown("medical", cooldowns.medical ?? 0);
+    renderCooldown("booster", cooldowns.booster ?? 0);
+
+    // ========= RACING =========
     renderRacing();
 
   } catch (e) {
@@ -184,7 +173,7 @@ renderCooldown("booster", cooldowns.booster ?? 0);
 updateDashboard();
 setInterval(updateDashboard, API_INTERVAL);
 
-// Cooldowns (somente os válidos)
+// Cooldowns
 setInterval(() => {
   if (cooldowns.drug > 0) {
     cooldowns.drug--;
@@ -202,8 +191,7 @@ setInterval(() => {
   }
 }, 1000);
 
-
-// Energy + Nerve
+// Energy + Nerve regen
 setInterval(() => {
   const now = Date.now();
 
