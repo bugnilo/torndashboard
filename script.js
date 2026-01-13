@@ -157,11 +157,14 @@ async function updateDashboard() {
       ? { readyAt: Date.now() + (nerveMissing * 5) * 60000 }
       : null;
 
-    // COOLDOWNS
-    cooldowns = { ...data.cooldowns };
-    renderCooldown("drug", cooldowns.drug);
-    renderCooldown("medical", cooldowns.medical);
-    renderCooldown("booster", cooldowns.booster);
+// COOLDOWNS (protegido)
+if (data.cooldowns) {
+  cooldowns = { ...data.cooldowns };
+}
+
+renderCooldown("drug", cooldowns.drug ?? 0);
+renderCooldown("medical", cooldowns.medical ?? 0);
+renderCooldown("booster", cooldowns.booster ?? 0);
 
     // RACING
     if (data.racing?.race?.ends) {
